@@ -1,0 +1,6 @@
+__pycache__/
+venv/
+*.zip
+.vscode/
+dump.txt
+cert_backup/

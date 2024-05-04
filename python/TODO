@@ -1,0 +1,5 @@
+* Generate new certificates
+    - SCEP (NDES)
+    - ADCS using ACME proxy
+* auto-generate certificate passphrase on export (thanks dan!)
+* (Maybe) Replace expiring certificates (Be careful with this!)
