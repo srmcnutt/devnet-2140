@@ -1,9 +1,72 @@
 import requests
+from bs4 import BeautifulSoup
 import os
 import json
+import rich
+import rich_click as click
 from datetime import datetime
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+def clear():
+    # for windows
+    if os.name == 'nt':
+        _ = os.system('cls')
+    # for mac and linux(here, os.name is 'posix')
+    else:
+        _ = os.system('clear')
+
+def pause():
+    input("Press Enter to continue...")
+    print("\n")
+    return
+
+# menu arg tells the function wether to pause after execution
+def commands(command, menu=False):
+    if command == "ls":
+        click.echo("Retrieving list of nodes in the deployment:\n")
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
+        for node in ise_nodes:
+            print(f"Found node: {node['name']}")
+            print(f"node id: {node['id']}\n")
+        if menu:
+            pause()
+
+    elif command == "export":
+        # retrieve certificates and populate cert list under the node object
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
+        export_cert_list(ise_nodes)
+        if menu:
+            pause()
+
+    elif command == "expire":
+        click.echo("Checking for Expiring Certs")
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
+        expiration_check(ise_nodes)
+        if menu:
+            pause()
+
+    elif command == "cert-list":
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
+        print_cert_list(ise_nodes)
+        if menu:
+            pause()
+    elif command == "refresh":
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
+        print_cert_list(ise_nodes)
+        if menu:
+            pause()
+    elif command == "enroll":
+        enroll_scep()
+        if menu:
+            pause()
+    
+    elif command == "import":
+        import_cert("local.crt", "local.key")
+    else:
+        if menu:
+            print("Command not found")
+            pause()
 
 def get_ise_creds():
     global ise_pan, ise_user, ise_password
@@ -12,6 +75,12 @@ def get_ise_creds():
     ise_password = os.environ.get("ISE_PASSWORD")
 
     return ise_pan, ise_user, ise_password
+
+def get_scep_creds():
+    global scep_admin, scep_password
+    scep_admin = os.environ.get("SCEP_ADMIN")
+    scep_password = os.environ.get("SCEP_PASSWORD")
+    return scep_admin, scep_password
 
 def get_nodes(ise_pan, ise_user, ise_password):
     """
@@ -122,8 +191,18 @@ def export_certificate(id, node, certificate_password="C1sco12345", dir="cert_ba
     open(f"{dir}/{filename}", 'wb').write(res.content)
 
 
-def make_scep():
-    pass
+def enroll_scep():
+    # Define the URL of the SCEP server
+    scep_challenge_url = 'http://pki1.pod1.abl.ninja/certsrv/mscep_admin'
+    scep_enroll_url = 'http://pki1.pod1.abl.ninja/certsrv/mscep/mscep.dll'
+
+    # Get the challenge password from the SCEP server
+    resp = requests.get(scep_challenge_url, auth=(scep_admin, scep_password))
+    htmldata = resp.content
+    parsedData = BeautifulSoup(htmldata, "html.parser")
+    tag=parsedData.find_all('b')
+    otp=tag[1].contents[0]
+    print(f"the one time password from the scep server is: {otp}")
 
 def make_adcs():
     pass
@@ -151,3 +230,51 @@ def expiration_check(ise_nodes):
 def replace_expiring():
     pass
 
+
+def import_cert(certificate='local.crt', key='local1.key'):
+    with open(certificate, 'r') as f:
+        cert = f.read()
+        cert = cert.replace('\r', '\\n')
+    with open(key, 'r') as f:
+        key = f.read()
+        key = key.replace('\r', '\\n')
+    
+    url=f"https://{ise_pan}/api/v1/certs/system-certificate/import"
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    payload = {
+      "admin": True,
+      "allowExtendedValidity": True,
+      "allowOutOfDateCert": True,
+      "allowPortalTagTransferForSameSubject": True,
+      "allowReplacementOfCertificates": True,
+      "allowReplacementOfPortalGroupTag": True,
+      "allowRoleTransferForSameSubject": True,
+      "allowSHA1Certificates": True,
+      "allowWildCardCertificates": False,
+      "data": cert,
+      "eap": False,
+      "ims": False,
+      "name": "steve function test",
+      "portal": False,
+      "portalGroupTag": "",
+      "privateKeyData": key,
+      "pxgrid": False,
+      "radius": False,
+      "saml": False,
+      "validateCertificateExtensions": False
+      
+    }
+    try:
+        res = requests.post(url, headers=headers, verify=False, auth=(ise_user, ise_password), json=payload)
+        res.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        message = err.response.text
+        message = json.loads(message)
+        print("The certificate could not be imported")
+        print(f"Reason: {message['response']['message']}")
+        pause()
+    return

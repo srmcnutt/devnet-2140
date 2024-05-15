@@ -3,29 +3,50 @@ import os
 import rich
 import rich_click as click
 from art import banner
+from data import main_commands
 from functions import\
     get_nodes,\
     print_cert_list,\
     export_cert_list,\
     get_ise_creds,\
-    expiration_check
+    expiration_check,\
+    commands,\
+    clear
 
 # get ISE environment variables
 # prompt for any missing information
-if not "ISE_PAN" in os.environ and "ISE_USER" not in os.environ\
-    and "ISE_PASSWORD" not in os.environ:
+if "ISE_PAN"not in os.environ:
+    os.environ["ISE_PAN"] = click.prompt("Enter ISE PAN hostname or IP address")
+if "ISE_USER" not in os.environ:
+    os.environ["ISE_USER"] = click.prompt("Enter ISE username")
+if "ISE_PASSWORD" not in os.environ:
+    os.environ["ISE_PASSWORD"] = click.prompt("Enter ISE password", hide_input=True)
 
-    print("""
-    Error: missing one or more environment variables.
 
-    Please ensure you've defined the following:
-    ISE_PAN
-    ISE_USER
-    ISE_PASSWORD
-    """)
-    exit(1)
+  #  print("""
+  #  Error: missing one or more environment variables.#
+
+  ##  Please ensure you've defined the following:
+  ##  ISE_PAN
+  ##  ISE_USER
+  ##  ISE_PASSWORD
+  #  """)
+  #  exit(1)
 
 ise_pan, ise_user, ise_password = get_ise_creds()
+
+def testLogin():
+    """
+    Test the connection to the ISE deployment
+    """
+    click.secho("Testing connection to ISE deployment...", fg="blue")
+    try:
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
+    except Exception as e:
+        click.echo(f"Error: {e}")
+        click.echo("Exiting")
+        exit(1)
+    click.secho("Connection successful! Lets do some ISE things\n", fg="green")
 
 @click.command()
 @click.option('-c', '--command',\
@@ -37,33 +58,44 @@ def cli(command):
     export - export all certificates to cert_backup folder using --password.
     expire - check for certificates expiring in --days.
     """
-    if command == None:
-        click.echo("No command selected. use --help for available commands.")
-   
+
     # get list of nodes in the deployment
-    if command == "ls":
-        click.echo("Retrieving list of nodes in the deployment:\n")
-        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
-        for node in ise_nodes:
-            print(f"Found node: {node['name']}")
-            print(f"node id: {node['id']}\n")
-
-    elif command == "export":
-        # retrieve certificates and populate cert list under the node object
-        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
-        export_cert_list(ise_nodes)
+    if command == "ls" or "export" or "cert-list" or "expire":
+        commands(command)
     
-    elif command == "cert-list":
-        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
-        print_cert_list(ise_nodes)
-        
-    elif command == "expire":
-        click.echo("Checking for Expiring Certs")
-        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
-        expiration_check(ise_nodes)
-
-
+    # if no command line argument is passed, enter interactive mode
+    if command == None:
+        click.secho("No command line argument detected: entering interactive mode.\n", fg="yellow")
+        menu()
+    
+            
+def menu():
+    while True:
+        i = 0
+        for item in main_commands:
+            click.secho(f"{i}. {item['description']}", fg="white")
+            i += 1
+        choice = click.prompt("\nEnter a number to select a command", type=int)
+        if choice == 0:
+            exit(0)
+        elif choice == 1:
+            commands(main_commands[1]['command'], menu=True)
+        elif choice == 2:
+            commands(main_commands[2]['command'], menu=True)
+        elif choice == 3:
+            commands(main_commands[3]['command'], menu=True)
+        elif choice == 4:
+            commands(main_commands[4]['command'], menu=True)
+        elif choice == 5:
+            commands(main_commands[5]['command'], menu=True)
+        elif choice == 6:
+            commands(main_commands[6]['command'], menu=True)
+        else:
+            click.echo("Invalid selection")
+            menu()
 
 if __name__ == "__main__":
+    clear()
     print(banner)
+    testLogin()
     cli()
