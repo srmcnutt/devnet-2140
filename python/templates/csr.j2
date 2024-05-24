@@ -1,0 +1,19 @@
+
+# Generate a CSR
+csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+    # Provide various details about who we are.
+    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "North Carolina"),
+    x509.NameAttribute(NameOID.LOCALITY_NAME, "Charlotte"),
+    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Always Be Labbing"),
+    x509.NameAttribute(NameOID.COMMON_NAME, "ise1.pod1.abl.ninja"),
+])).add_extension(
+    x509.SubjectAlternativeName([
+        # Describe what sites we want this certificate for.
+        x509.DNSName("ise1.pod1.abl.ninja"),
+        x509.DNSName("ise1"),
+        x509.DNSName("ise"),
+        x509.IPAddress(ipaddress.IPv4Address('10.253.68.202')),
+        x509.IPAddress(ipaddress.IPv4Address('10.253.68.203')),
+    ]),
+    critical=False,

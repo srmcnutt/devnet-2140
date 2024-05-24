@@ -1,2 +1,4 @@
 requests
 rich_click
+cryptography
+bs4

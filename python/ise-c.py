@@ -91,11 +91,11 @@ def menu():
         elif choice == 6:
             commands(main_commands[6]['command'], menu=True)
         else:
-            click.echo("Invalid selection")
+            click.secho("Invalid selection", fg="red")
             menu()
 
 if __name__ == "__main__":
-    clear()
+    click.clear()
     print(banner)
     testLogin()
     cli()

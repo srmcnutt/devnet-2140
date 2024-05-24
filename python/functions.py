@@ -16,11 +16,6 @@ def clear():
     else:
         _ = os.system('clear')
 
-def pause():
-    input("Press Enter to continue...")
-    print("\n")
-    return
-
 # menu arg tells the function wether to pause after execution
 def commands(command, menu=False):
     if command == "ls":
@@ -30,43 +25,45 @@ def commands(command, menu=False):
             print(f"Found node: {node['name']}")
             print(f"node id: {node['id']}\n")
         if menu:
-            pause()
+            click.pause()
 
     elif command == "export":
         # retrieve certificates and populate cert list under the node object
         ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
         export_cert_list(ise_nodes)
         if menu:
-            pause()
+            click.pause()
 
     elif command == "expire":
         click.echo("Checking for Expiring Certs")
         ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
         expiration_check(ise_nodes)
         if menu:
-            pause()
+            click.pause()
 
     elif command == "cert-list":
         ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
         print_cert_list(ise_nodes)
         if menu:
-            pause()
+            click.pause()
     elif command == "refresh":
         ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
         print_cert_list(ise_nodes)
         if menu:
-            pause()
+           click.pause()
     elif command == "enroll":
         enroll_scep()
         if menu:
-            pause()
+            click.pause()
     
     elif command == "import":
-        import_cert("local.crt", "local.key")
+        import_cert("scep_cert.pem", "key.pem")
+        if menu:
+            click.pause()
     else:
         if menu:
             print("Command not found")
-            pause()
+            click.pause()
 
 def get_ise_creds():
     global ise_pan, ise_user, ise_password
@@ -231,7 +228,7 @@ def replace_expiring():
     pass
 
 
-def import_cert(certificate='local.crt', key='local1.key'):
+def import_cert(certificate='local.crt', key='local.key'):
     with open(certificate, 'r') as f:
         cert = f.read()
         cert = cert.replace('\r', '\\n')
@@ -246,7 +243,7 @@ def import_cert(certificate='local.crt', key='local1.key'):
         "Content-Type": "application/json"
     }
     payload = {
-      "admin": True,
+      "admin": False,
       "allowExtendedValidity": True,
       "allowOutOfDateCert": True,
       "allowPortalTagTransferForSameSubject": True,
@@ -254,7 +251,7 @@ def import_cert(certificate='local.crt', key='local1.key'):
       "allowReplacementOfPortalGroupTag": True,
       "allowRoleTransferForSameSubject": True,
       "allowSHA1Certificates": True,
-      "allowWildCardCertificates": False,
+      "allowWildCardCertificates": True,
       "data": cert,
       "eap": False,
       "ims": False,
@@ -268,13 +265,17 @@ def import_cert(certificate='local.crt', key='local1.key'):
       "validateCertificateExtensions": False
       
     }
+    
     try:
         res = requests.post(url, headers=headers, verify=False, auth=(ise_user, ise_password), json=payload)
         res.raise_for_status()
+        message = res.json()
+        click.secho(f"Server Response: ", fg='green', nl=False)
+        click.secho(f"{message['response']['message']}")
+        print(f"Certificate id: {message['response']['id']}")
     except requests.exceptions.HTTPError as err:
         message = err.response.text
         message = json.loads(message)
         print("The certificate could not be imported")
         print(f"Reason: {message['response']['message']}")
-        pause()
     return
