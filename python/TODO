@@ -1,5 +1,11 @@
+* refactor command line processing to use data.py
 * Generate new certificates
-    - SCEP (NDES)
+    - SCEP (NDES) 
     - ADCS using ACME proxy
 * auto-generate certificate passphrase on export (thanks dan!)
-* (Maybe) Replace expiring certificates (Be careful with this!)
+* data model for storing certificate information
+* store certificate information
+* certificate selector  
+* j2 template for csr generation
+* clone certificate
+

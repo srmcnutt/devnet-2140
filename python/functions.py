@@ -6,6 +6,9 @@ import rich
 import rich_click as click
 from datetime import datetime
 import urllib3
+from csr import generate_csr
+from scep import enroll_scep 
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def clear():
@@ -46,18 +49,25 @@ def commands(command, menu=False):
         print_cert_list(ise_nodes)
         if menu:
             click.pause()
-    elif command == "refresh":
-        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
-        print_cert_list(ise_nodes)
+    elif command == "external-csr":
+        generate_csr()
         if menu:
            click.pause()
-    elif command == "enroll":
+    elif command == "internal-csr":
+        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
         enroll_scep()
         if menu:
             click.pause()
-    
+    elif command == "enroll-scep":
+        enroll_scep()
+        if menu:
+            click.pause()
+    elif command == "enroll-acme":
+        enroll_acme()
+        if menu:
+            click.pause()
     elif command == "import":
-        import_cert("scep_cert.pem", "key.pem")
+        import_cert("work/scep_issued_cert.pem", "work/key.pem")
         if menu:
             click.pause()
     else:
@@ -188,19 +198,6 @@ def export_certificate(id, node, certificate_password="C1sco12345", dir="cert_ba
     open(f"{dir}/{filename}", 'wb').write(res.content)
 
 
-def enroll_scep():
-    # Define the URL of the SCEP server
-    scep_challenge_url = 'http://pki1.pod1.abl.ninja/certsrv/mscep_admin'
-    scep_enroll_url = 'http://pki1.pod1.abl.ninja/certsrv/mscep/mscep.dll'
-
-    # Get the challenge password from the SCEP server
-    resp = requests.get(scep_challenge_url, auth=(scep_admin, scep_password))
-    htmldata = resp.content
-    parsedData = BeautifulSoup(htmldata, "html.parser")
-    tag=parsedData.find_all('b')
-    otp=tag[1].contents[0]
-    print(f"the one time password from the scep server is: {otp}")
-
 def make_adcs():
     pass
 
@@ -228,7 +225,7 @@ def replace_expiring():
     pass
 
 
-def import_cert(certificate='local.crt', key='local.key'):
+def import_cert(certificate='work/scep_issued_cert.pem', key='work/key.pem'):
     with open(certificate, 'r') as f:
         cert = f.read()
         cert = cert.replace('\r', '\\n')

@@ -60,6 +60,7 @@ def cli(command):
     """
 
     # get list of nodes in the deployment
+    # TODO refactor to read commands from database (currently data.py)
     if command == "ls" or "export" or "cert-list" or "expire":
         commands(command)
     
@@ -68,7 +69,7 @@ def cli(command):
         click.secho("No command line argument detected: entering interactive mode.\n", fg="yellow")
         menu()
     
-            
+# read menu options from data.py            
 def menu():
     while True:
         i = 0
@@ -78,18 +79,8 @@ def menu():
         choice = click.prompt("\nEnter a number to select a command", type=int)
         if choice == 0:
             exit(0)
-        elif choice == 1:
-            commands(main_commands[1]['command'], menu=True)
-        elif choice == 2:
-            commands(main_commands[2]['command'], menu=True)
-        elif choice == 3:
-            commands(main_commands[3]['command'], menu=True)
-        elif choice == 4:
-            commands(main_commands[4]['command'], menu=True)
-        elif choice == 5:
-            commands(main_commands[5]['command'], menu=True)
-        elif choice == 6:
-            commands(main_commands[6]['command'], menu=True)
+        if choice < len(main_commands):
+            commands(main_commands[choice]['command'], menu=True)
         else:
             click.secho("Invalid selection", fg="red")
             menu()

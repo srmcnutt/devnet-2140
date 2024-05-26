@@ -5,6 +5,8 @@ main_commands = [
             {'command': 'cert-list', 'description': 'List Certificates'},\
             {'command': 'export', 'description': 'Back up certificates'},\
             {'command': 'expire', 'description': 'Show expiring certificates'},\
-            {'command': 'refresh', 'description': 'Create a certificate Signing Request based on existing certificate'},\
+            {'command': 'external-csr', 'description': 'Create a certificate Signing Request with external key (scep)'},\
+            {'command': 'enroll-scep', 'description': 'Enroll a certificate with SCEP'},\
+            {'command': 'enroll-acme', 'description': 'Enroll a certificate with ACME'},\
             {'command': 'import', 'description': 'Import a certificate with its private key'},\
             ]
