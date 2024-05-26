@@ -1,5 +1,6 @@
 __pycache__/
 venv/
+work/
 *.zip
 .vscode/
 dump.txt
