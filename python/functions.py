@@ -4,10 +4,15 @@ import os
 import json
 import rich
 import rich_click as click
+from rich_click import secho
 from datetime import datetime
 import urllib3
 from csr import generate_csr
-from scep import enroll_scep 
+from iscep import enroll_scep
+from iacme import enroll_acme
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from data import certificates
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -50,7 +55,8 @@ def commands(command, menu=False):
         if menu:
             click.pause()
     elif command == "external-csr":
-        generate_csr()
+        cert=cert_picker()
+        generate_csr(template=certificates[cert])
         if menu:
            click.pause()
     elif command == "internal-csr":
@@ -276,3 +282,29 @@ def import_cert(certificate='work/scep_issued_cert.pem', key='work/key.pem'):
         print("The certificate could not be imported")
         print(f"Reason: {message['response']['message']}")
     return
+
+def read_cert_file(file):
+    with open(file, 'rb') as f:
+        pem_data = f.read()
+        cert = x509.load_pem_x509_certificate(pem_data)
+    return cert
+
+def cert_picker():
+    x = 0
+    for item in certificates:
+        secho(f"\nCertificate #{x+1}: ", fg="yellow")
+        secho(f"Friendly Name: {item['friendly name']}")
+        secho(f"Common Name: {item['common_name']}")
+        secho(f"Subject Alternative Names: ", fg="white")
+        for san in item['san']:
+            print(f"Type: {san['type']}, Value: {san['value']}")
+        x += 1
+    cert = click.prompt("\nSelect a certificate by Number", type=int)
+    cert = cert - 1
+    print(f'length is {len(certificates)}')
+    print(f'selection is {cert}')
+    if cert > len(certificates)-1 or cert < 0:
+        secho("Invalid selection", fg="red")
+        cert_picker()
+    return cert
+    
