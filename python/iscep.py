@@ -1,4 +1,3 @@
-
 from subprocess import run 
 
 def enroll_scep():
@@ -18,4 +17,5 @@ def enroll_scep():
     # Run the SCEP client
     res = run(['sscep', 'enroll', '-f', 'scep/sscep.conf'], capture_output=True, check=True)
     # print(res.stdout)
+    print("certificate enrolled successfully!")
     return

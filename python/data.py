@@ -30,7 +30,6 @@ certificates = [
              'san': [
                 {'type': 'DNS', 'value': 'ise100.pod1.abl.ninja'},
                 {'type': 'DNS', 'value': '*.abl.ninja'},
-                {'type': 'DNS', 'value': 'ise'},
                 ]
             }
         ]

@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 import os
-import rich
 import rich_click as click
 from art import banner
 from data import main_commands
 from functions import\
     get_nodes,\
-    print_cert_list,\
-    export_cert_list,\
     get_ise_creds,\
-    expiration_check,\
-    commands,\
-    clear
+    commands
 
 # get ISE environment variables
 # prompt for any missing information
@@ -21,17 +16,6 @@ if "ISE_USER" not in os.environ:
     os.environ["ISE_USER"] = click.prompt("Enter ISE username")
 if "ISE_PASSWORD" not in os.environ:
     os.environ["ISE_PASSWORD"] = click.prompt("Enter ISE password", hide_input=True)
-
-
-  #  print("""
-  #  Error: missing one or more environment variables.#
-
-  ##  Please ensure you've defined the following:
-  ##  ISE_PAN
-  ##  ISE_USER
-  ##  ISE_PASSWORD
-  #  """)
-  #  exit(1)
 
 ise_pan, ise_user, ise_password = get_ise_creds()
 
@@ -46,12 +30,13 @@ def testLogin():
         click.echo(f"Error: {e}")
         click.echo("Exiting")
         exit(1)
-    click.secho("Connection successful! Lets do some ISE things\n", fg="green")
+    click.secho("Connection successful! Lets do some ISE things", fg="green")
 
+#TODO refactor cli to use main_commands from data.py
 @click.command()
 @click.option('-c', '--command',\
     type = click.Choice(['ls', 'export','cert-list', 'expire']))
-@click.version_option(version="0.1")
+@click.version_option(version="0.3")
 def cli(command):
     """
     ls - list nodes in the ISE deployment.

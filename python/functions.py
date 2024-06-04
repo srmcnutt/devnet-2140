@@ -54,28 +54,30 @@ def commands(command, menu=False):
         print_cert_list(ise_nodes)
         if menu:
             click.pause()
+    
     elif command == "external-csr":
         cert=cert_picker()
+        if cert == -1:
+            return
         generate_csr(template=certificates[cert])
         if menu:
            click.pause()
-    elif command == "internal-csr":
-        ise_nodes = get_nodes(ise_pan, ise_user, ise_password)
-        enroll_scep()
-        if menu:
-            click.pause()
+
     elif command == "enroll-scep":
         enroll_scep()
         if menu:
             click.pause()
+    
     elif command == "enroll-acme":
         enroll_acme()
         if menu:
             click.pause()
+    
     elif command == "import":
         import_cert("work/scep_issued_cert.pem", "work/key.pem")
         if menu:
             click.pause()
+   
     else:
         if menu:
             print("Command not found")
@@ -299,10 +301,11 @@ def cert_picker():
         for san in item['san']:
             print(f"Type: {san['type']}, Value: {san['value']}")
         x += 1
-    cert = click.prompt("\nSelect a certificate by Number", type=int)
+    cert = click.prompt("\nSelect a certificate by Number, 0 to exit", type=int)
     cert = cert - 1
-    print(f'length is {len(certificates)}')
-    print(f'selection is {cert}')
+    print(f'selection is {cert+1}')
+    if cert == -1:
+        return
     if cert > len(certificates)-1 or cert < 0:
         secho("Invalid selection", fg="red")
         cert_picker()

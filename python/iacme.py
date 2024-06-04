@@ -1,5 +1,6 @@
 from subprocess import run
 
+#TODO - debug the enroll_acme function
 def enroll_acme(csr='work/csr.pem', dns='dns_cf'):
     """Run the ACME client (must be installed and configured first)
     Pass in the path to the CSR and the DNS provider you want to use.
